@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>邦手定位</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;}
+body{
+    background:#ffffff;
+    text-align:center;
+    padding:40px 24px;
+}
+.title{
+    font-size:22px;
+    color:#222;
+    margin-bottom:32px;
+}
+#qrcanvas{
+    width:80%;
+    max-width:320px;
+    margin:0 auto 32px;
+}
+.info-wrap{
+    text-align:left;
+    width:80%;
+    max-width:320px;
+    margin:0 auto 48px;
+    font-size:18px;
+    color:#333;
+    line-height:2.4;
+}
+.info-item{
+    margin:4px 0;
+}
+#btnRelocate{
+    width:80%;
+    max-width:320px;
+    background-color:#24bc57;
+    color:#fff;
+    border:none;
+    border-radius:12px;
+    font-size:19px;
+    padding:16px 0;
+}
+#btnRelocate:active{
+    background:#1fa84c;
+}
+</style>
+</head>
+<body>
+<div class="title">邦手定位</div>
+<canvas id="qrcanvas"></canvas>
+<div class="info-wrap">
+    <div class="info-item">当前经度：<span id="lngVal"></span></div>
+    <div class="info-item">当前纬度：<span id="latVal"></span></div>
+    <div class="info-item">定位时间：<span id="timeVal"></span></div>
+</div>
+<button id="btnRelocate">重新定位</button>
+
+<script>
+const $ = s => document.querySelector(s);
+function getTimeStr(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const h = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    const sec = String(d.getSeconds()).padStart(2, '0');
+    return `${y}/${m}/${day} ${h}:${mi}:${sec}`;
+}
+
+async function startLocate(){
+    $("#btnRelocate").innerText = "定位中...";
+    navigator.geolocation.getCurrentPosition(pos=>{
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const t = getTimeStr();
+        $("#latVal").innerText = lat;
+        $("#lngVal").innerText = lng;
+        $("#timeVal").innerText = t;
+        //邦手标准JSON
+        const jsonText = `{"longitude":"${lng}","latitude":"${lat}","time":"${t}","type":"01"}`;
+        QRCode.toCanvas($("#qrcanvas"), jsonText, {width:320, margin:2}, err=>{
+            $("#btnRelocate").innerText = "重新定位";
+        })
+    }, err=>{
+        alert("定位失败，请检查：GPS开关、浏览器定位权限、虚拟定位是否开启");
+        $("#btnRelocate").innerText = "重新定位";
+    },{
+        enableHighAccuracy:true,
+        timeout:12000,
+        maximumAge:0
+    })
+}
+$("#btnRelocate").onclick = startLocate;
+</script>
+</body>
+</html>
